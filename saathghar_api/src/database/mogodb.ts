@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { MONGODB_URL } from "../configs/constant";
 
-export const connectToMongoDB = async () => {
+export const connectMongoDB = async () => {
     try {
         await mongoose.connect(MONGODB_URL);
         console.log("Connected To MongoDB Successfully");
@@ -10,3 +10,5 @@ export const connectToMongoDB = async () => {
         throw error; 
     }
 }
+
+export default connectMongoDB();
