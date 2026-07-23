@@ -1,8 +1,9 @@
 "use server";
 
-import { login, register } from "../api/auth";
-import { setTokenCookie, storeUserData } from "../cookies";
+import { login, register, whoami, updateProfile } from "../api/auth";
+import { setTokenCookie, storeUserData, clearAuthCookies } from "../cookies";
 import { LoginFormData, RegisterFormData } from "../../app/(auth)/_component/schema";
+import { revalidatePath } from "next/cache";
 
 export const handleLoginUser = async (data: LoginFormData) => {
     try {
@@ -18,7 +19,9 @@ export const handleLoginUser = async (data: LoginFormData) => {
             
             return { 
                 success: true, 
-                message: result.message || 'Login successful' 
+                message: result.message || 'Login successful',
+                role: user?.role,
+                user: user
             }; 
         }
         
@@ -57,3 +60,45 @@ export const handleRegisterUser = async (data: RegisterFormData) => {
         };    
     }
 };
+
+export const handleWhoami = async () => {
+    try {        
+        const response = await whoami();
+        if (response.success) {
+            return {
+                success: true,
+                data: response.data
+            }
+        }
+        return { success: false, message: response.message || 'Whoami failed' }
+    } catch (error: Error | any) {
+        return { success: false, message: error.message || 'Whoami action failed' }
+    }
+}
+
+export const handleUpdateProfile = async (formData: FormData) => {
+    try {
+        const response = await updateProfile(formData);
+        if (response.success) {
+            await storeUserData(response.data);
+            revalidatePath("/user/profile"); // refresh cache 
+            return {
+                success: true,
+                message: 'Profile updated successfully',
+                data: response.data
+            }
+        }
+        return { success: false, message: response.message || 'Update profile failed' }
+    } catch (error: Error | any) {
+        return { success: false, message: error.message || 'Update profile action failed' }
+    }
+}
+
+export const handleLogoutUser = async () => {
+    try {
+        await clearAuthCookies();
+        return { success: true, message: "Logged out successfully" };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Logout failed" };
+    }
+}
