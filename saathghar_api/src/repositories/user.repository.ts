@@ -37,7 +37,10 @@ export class UserMongoRepository implements IUserRepository {
     }
     
     async update(id: string, user: Partial<IUser>): Promise<IUser | null> {
-        const updated = await UserModel.findByIdAndUpdate(id, user, { new: true });
+        const found = await UserModel.findById(id);
+        if (!found) return null;
+        Object.assign(found, user);
+        const updated = await found.save();
         return updated;
     }
     
