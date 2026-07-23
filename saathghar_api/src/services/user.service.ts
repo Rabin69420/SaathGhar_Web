@@ -56,4 +56,44 @@ export class UserService {
         
         return { user: userObj, token };
     }
+
+    async getUserById(id: string): Promise<any> {
+        const user = await userRepository.getUserById(id);
+        if (!user) {
+            throw new HttpException(404, "User not found");
+        }
+        const userObj = user.toObject();
+        delete userObj.password;
+        return userObj;
+    }
+
+    async updateUserProfile(id: string, updateData: Partial<IUser>): Promise<any> {
+        const user = await userRepository.getUserById(id);
+        if (!user) {
+            throw new HttpException(404, "User not found");
+        }
+
+        if (updateData.email && updateData.email !== user.email) {
+            const existingEmail = await userRepository.getUserByEmail(updateData.email);
+            if (existingEmail) {
+                throw new HttpException(400, "Email already exists");
+            }
+        }
+
+        if (updateData.username && updateData.username !== user.username) {
+            const existingUsername = await userRepository.getUserByUsername(updateData.username);
+            if (existingUsername) {
+                throw new HttpException(400, "Username already exists");
+            }
+        }
+
+        const updatedUser = await userRepository.update(id, updateData);
+        if (!updatedUser) {
+            throw new HttpException(400, "Failed to update profile");
+        }
+
+        const userObj = updatedUser.toObject();
+        delete userObj.password;
+        return userObj;
+    }
 }
