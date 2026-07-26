@@ -4,6 +4,7 @@ import { UserTypes } from "../types/user.types";
 export interface IUser extends UserTypes, mongoose.Document {
     _id: mongoose.Types.ObjectId;
     bookmarks?: mongoose.Types.ObjectId[];
+    savedRoommates?: mongoose.Types.ObjectId[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -20,6 +21,7 @@ const UserMongoSchema = new Schema<IUser>(
         lastName: { type: String },
         imageUrl: { type: String },
         bookmarks: [{ type: Schema.Types.ObjectId, ref: "Item", default: [] }],
+        savedRoommates: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
         preferences: {
             cleanliness: { type: String, default: "" },
             noiseLevel: { type: String, default: "" },
