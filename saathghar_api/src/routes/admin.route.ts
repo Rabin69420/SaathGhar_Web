@@ -14,5 +14,9 @@ adminRouter.get("/users", adminController.getAllUsers);
 adminRouter.delete("/users/:id", adminController.deleteUser);
 adminRouter.get("/listings", adminController.getAllListings);
 adminRouter.delete("/listings/:id", adminController.deleteListing);
+adminRouter.get("/applications", adminController.getAllApplications);
+adminRouter.delete("/applications/:id", adminController.deleteApplication);
+adminRouter.get("/reviews", adminController.getAllReviews);
+adminRouter.delete("/reviews/:id", adminController.deleteReview);
 
 export default adminRouter;
