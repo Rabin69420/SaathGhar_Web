@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { handleCreateListing, handleUploadMedia } from "@/lib/actions/listings-action";
+import { toast } from "react-toastify";
 
 export default function NewListingPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function NewListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !rent.trim() || !location.trim() || !description.trim() || !imageFile) {
-      setErrorMsg("All fields except video are required!");
+      toast.error("All fields except video are required!");
       return;
     }
 
@@ -66,7 +67,7 @@ export default function NewListingPage() {
       setUploadProgress(100);
 
       if (submitRes.success) {
-        alert("Listing posted successfully!");
+        toast.success("Listing posted successfully!");
         router.push("/dashboard");
       } else {
         throw new Error(submitRes.message || "Failed to submit room details.");

@@ -4,6 +4,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { handleGetListingById, handleDeleteListing, handleGetBookmarkedListings, handleToggleBookmark, handleCheckCompatibility } from "@/lib/actions/listings-action";
 import { handleWhoami } from "@/lib/actions/auth-action";
+import { handleCreateApplication } from "@/lib/actions/applications-action";
+import { handleGetReviewsForListing } from "@/lib/actions/reviews-action";
+import { toast } from "react-toastify";
+import ConfirmModal from "@/app/component/common/ConfirmModal";
+import StarRating from "@/app/component/common/StarRating";
+import Link from "next/link";
 
 export default function ListingDetailPage() {
   const params = useParams();
@@ -16,6 +22,11 @@ export default function ListingDetailPage() {
   const [compatibilityResult, setCompatibilityResult] = useState<any>(null);
   const [checkingCompatibility, setCheckingCompatibility] = useState(false);
   const [isCustomizing, setIsCustomizing] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [applyMessage, setApplyMessage] = useState("");
+  const [applyingSubmitting, setApplyingSubmitting] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
 
   // Preference states for checker
   const [cleanliness, setCleanliness] = useState("Medium");
@@ -68,7 +79,7 @@ export default function ListingDetailPage() {
     if (res.success && res.data) {
       setListing(res.data);
     } else {
-      alert(res.message || "Failed to load listing details");
+      toast.error(res.message || "Failed to load listing details");
       router.push("/dashboard");
     }
     setLoading(false);
@@ -76,7 +87,33 @@ export default function ListingDetailPage() {
 
   useEffect(() => {
     loadListing();
+    loadReviews();
   }, [params.id]);
+
+  const loadReviews = async () => {
+    if (!params.id) return;
+    const res = await handleGetReviewsForListing(params.id as string);
+    if (res.success) {
+      setReviews(res.data || []);
+    }
+  };
+
+  const handleApply = async () => {
+    if (applyMessage.length < 10) {
+      toast.error("Application message must be at least 10 characters");
+      return;
+    }
+    setApplyingSubmitting(true);
+    const res = await handleCreateApplication({ listing: params.id as string, message: applyMessage });
+    if (res.success) {
+      toast.success("Application submitted successfully!");
+      setApplyModalOpen(false);
+      setApplyMessage("");
+    } else {
+      toast.error(res.message);
+    }
+    setApplyingSubmitting(false);
+  };
 
   const runCompatibilityCheck = async () => {
     if (!params.id) return;
@@ -96,35 +133,34 @@ export default function ListingDetailPage() {
     if (res.success && res.data) {
       setCompatibilityResult(res.data);
     } else {
-      alert(res.message || "Failed to analyze compatibility");
+      toast.error(res.message || "Failed to analyze compatibility");
     }
     setCheckingCompatibility(false);
   };
 
   const handleBookmarkToggle = async () => {
     if (!currentUser || !listing) {
-      alert("Please log in to bookmark room listings.");
+      toast.warning("Please log in to bookmark room listings.");
       return;
     }
     const res = await handleToggleBookmark(listing._id);
     if (res.success) {
       setIsBookmarked(!isBookmarked);
     } else {
-      alert(res.message);
+      toast.error(res.message);
     }
   };
 
   const handleDelete = async () => {
     if (!listing) return;
-    if (confirm("Are you sure you want to delete this room listing?")) {
-      const res = await handleDeleteListing(listing._id);
-      if (res.success) {
-        alert("Listing deleted successfully!");
-        router.push("/dashboard");
-      } else {
-        alert(res.message);
-      }
+    const res = await handleDeleteListing(listing._id);
+    if (res.success) {
+      toast.success("Listing deleted successfully!");
+      router.push("/dashboard");
+    } else {
+      toast.error(res.message);
     }
+    setDeleteConfirmOpen(false);
   };
 
   if (loading) {
@@ -201,8 +237,18 @@ export default function ListingDetailPage() {
             )}
 
             {isOwner && (
-              <button
-                onClick={handleDelete}
+              <>
+                <Link
+                  href={`/dashboard/listings/${listing._id}/edit`}
+                  className="px-4 py-2 text-sm font-semibold text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/30 border border-teal-100 dark:border-teal-900/30 rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit
+                </Link>
+                <button
+                  onClick={() => setDeleteConfirmOpen(true)}
                 className="px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 border border-red-100 rounded-lg transition-colors flex items-center gap-1.5"
               >
                 <svg
@@ -220,6 +266,7 @@ export default function ListingDetailPage() {
                 </svg>
                 Delete Room
               </button>
+              </>
             )}
           </div>
         </div>
@@ -654,8 +701,109 @@ export default function ListingDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Apply for Room button (non-owners only) */}
+          {!isOwner && currentUser && (
+            <div className="border-t border-slate-100 pt-6">
+              <button
+                onClick={() => setApplyModalOpen(true)}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Apply for this Room
+              </button>
+            </div>
+          )}
+
+          {/* Reviews Section */}
+          <div className="border-t border-slate-100 pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-800">Reviews ({reviews.length})</h2>
+              {!isOwner && currentUser && listing.owner && (
+                <Link
+                  href={`/dashboard/reviews/new?reviewee=${listing.owner._id}&listing=${listing._id}`}
+                  className="text-sm font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+                >
+                  Write a Review
+                </Link>
+              )}
+            </div>
+            {reviews.length === 0 ? (
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-8 text-center">
+                <p className="text-slate-400 text-sm">No reviews yet for this listing.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review: any) => (
+                  <div key={review._id} className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-sm shrink-0">
+                        {review.reviewer?.fullName?.[0]?.toUpperCase() || "U"}
+                      </div>
+                      <div className="flex-1">
+                        <span className="font-semibold text-slate-800 text-sm">{review.reviewer?.fullName || review.reviewer?.username}</span>
+                        <div className="flex items-center gap-2">
+                          <StarRating rating={review.rating} size="sm" />
+                          <span className="text-xs text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-slate-600 text-sm ml-11">{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Apply Modal */}
+      {applyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setApplyModalOpen(false)}></div>
+          <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Apply for this Room</h3>
+            <p className="text-sm text-slate-500 mb-4">Send a message to the listing owner explaining why you&apos;d be a great roommate.</p>
+            <textarea
+              value={applyMessage}
+              onChange={(e) => setApplyMessage(e.target.value)}
+              rows={4}
+              placeholder="Introduce yourself, mention your lifestyle, why this room interests you..."
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm"
+              minLength={10}
+              maxLength={1000}
+            />
+            <p className="text-xs text-slate-400 mt-1 mb-4">{applyMessage.length}/1000 (min 10)</p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleApply}
+                disabled={applyingSubmitting}
+                className="flex-1 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                {applyingSubmitting ? "Submitting..." : "Submit Application"}
+              </button>
+              <button
+                onClick={() => setApplyModalOpen(false)}
+                className="px-4 py-2.5 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={deleteConfirmOpen}
+        title="Delete Room Listing"
+        message="Are you sure you want to delete this room listing? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
     </div>
   );
 }
