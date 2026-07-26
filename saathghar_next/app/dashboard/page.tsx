@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { handleGetListings, handleDeleteListing, handleGetMyListings, handleGetBookmarkedListings, handleToggleBookmark } from "@/lib/actions/listings-action";
 import { getCookieClientSide } from "@/lib/cookies-client";
+import { toast } from "react-toastify";
+import ConfirmModal from "@/app/component/common/ConfirmModal";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -17,6 +19,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [maxRent, setMaxRent] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string }>({ open: false, id: "" });
 
   const loadListings = async (userObj?: any) => {
     setLoading(true);
@@ -87,28 +90,24 @@ export default function DashboardPage() {
     e.preventDefault();
     e.stopPropagation();
     if (!currentUser) {
-      alert("Please log in to bookmark room listings.");
+      toast.warning("Please log in to bookmark room listings.");
       return;
     }
     const res = await handleToggleBookmark(id);
     if (res.success) {
       loadListings();
     } else {
-      alert(res.message);
+      toast.error(res.message);
     }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (confirm("Are you sure you want to delete this room listing?")) {
-      const res = await handleDeleteListing(id);
-      if (res.success) {
-        alert("Listing deleted successfully!");
-        loadListings();
-      } else {
-        alert(res.message);
-      }
+  const handleDelete = async (id: string) => {
+    const res = await handleDeleteListing(id);
+    if (res.success) {
+      toast.success("Listing deleted successfully!");
+      loadListings();
+    } else {
+      toast.error(res.message);
     }
   };
 
@@ -410,7 +409,7 @@ export default function DashboardPage() {
                       {isOwner && (
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={(e) => handleDelete(listing._id, e)}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteConfirm({ open: true, id: listing._id }); }}
                             className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                             title="Delete"
                           >
@@ -438,6 +437,15 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      <ConfirmModal
+        isOpen={deleteConfirm.open}
+        title="Delete Room Listing"
+        message="Are you sure you want to delete this room listing? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => { handleDelete(deleteConfirm.id); setDeleteConfirm({ open: false, id: "" }); }}
+        onCancel={() => setDeleteConfirm({ open: false, id: "" })}
+      />
     </div>
   );
 }
