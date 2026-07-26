@@ -10,9 +10,9 @@ export default function CTA() {
           Join thousands of students and professionals matching up and booking
           accommodation effortlessly.
         </p>
-        <button className="px-10 py-4 bg-white text-primary hover:bg-white/95 font-bold rounded-xl shadow-lg hover:shadow-white/10 transition-all transform hover:-translate-y-0.5 cursor-pointer text-base">
+        <a href="/register" className="inline-block px-10 py-4 bg-white text-primary hover:bg-white/95 font-bold rounded-xl shadow-lg hover:shadow-white/10 transition-all transform hover:-translate-y-0.5 cursor-pointer text-base">
           Get Started Free
-        </button>
+        </a>
       </div>
     </section>
   );

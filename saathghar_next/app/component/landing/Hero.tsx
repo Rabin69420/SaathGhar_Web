@@ -15,12 +15,12 @@ export default function Hero() {
           flexible.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button className="w-full sm:w-auto px-8 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl transition-all transform hover:-translate-y-0.5 shadow-lg shadow-primary/20 hover:shadow-primary/35 cursor-pointer">
+          <a href="/dashboard" className="w-full sm:w-auto px-8 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl transition-all transform hover:-translate-y-0.5 shadow-lg shadow-primary/20 hover:shadow-primary/35 cursor-pointer text-center">
             Find a Partner
-          </button>
-          <button className="w-full sm:w-auto px-8 py-3.5 bg-background border-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground font-semibold rounded-xl transition-all transform hover:-translate-y-0.5 cursor-pointer">
+          </a>
+          <a href="/dashboard" className="w-full sm:w-auto px-8 py-3.5 bg-background border-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground font-semibold rounded-xl transition-all transform hover:-translate-y-0.5 cursor-pointer text-center">
             Book Full Room
-          </button>
+          </a>
         </div>
       </div>
     </section>
