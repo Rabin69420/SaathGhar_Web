@@ -34,5 +34,10 @@ userRouter.post("/login", userController.loginUser);
 userRouter.post("/whoami", authorizedMiddleware, userController.whoamiUser);
 userRouter.get("/whoami", authorizedMiddleware, userController.whoamiUser);
 userRouter.put("/update", authorizedMiddleware, upload.single("image"), userController.updateProfile);
+userRouter.get("/preferences", authorizedMiddleware, userController.getPreferences);
+userRouter.put("/preferences", authorizedMiddleware, userController.updatePreferences);
+userRouter.delete("/preferences", authorizedMiddleware, userController.resetPreferences);
+userRouter.get("/saved-roommates", authorizedMiddleware, userController.getSavedRoommates);
+userRouter.post("/saved-roommates/:roommateId", authorizedMiddleware, userController.toggleSavedRoommate);
 
 export default userRouter;
