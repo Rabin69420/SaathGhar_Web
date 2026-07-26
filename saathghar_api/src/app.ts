@@ -9,6 +9,9 @@ import userRoutes from "./routes/user.route";
 import itemRoutes from "./routes/item.route";
 import fileRoutes from "./routes/file.route";
 import adminRoutes from "./routes/admin.route";
+import applicationRoutes from "./routes/application.route";
+import reviewRoutes from "./routes/review.route";
+import notificationRoutes from "./routes/notification.route";
 
 const app: Application = express();
 const corsOptions = {
@@ -26,6 +29,9 @@ app.use("/api/v1/items", itemRoutes); // items related routes
 app.use("/api/v1/listings", itemRoutes); // listings alias for mobile app
 app.use("/api/v1/file", fileRoutes); // generic file upload route
 app.use("/api/v1/admin", adminRoutes); // admin related routes
+app.use("/api/v1/applications", applicationRoutes); // application related routes
+app.use("/api/v1/reviews", reviewRoutes); // review related routes
+app.use("/api/v1/notifications", notificationRoutes); // notification related routes
 
 
 // global api handler (at the last)
