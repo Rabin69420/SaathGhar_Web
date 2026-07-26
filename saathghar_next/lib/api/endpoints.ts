@@ -4,6 +4,9 @@ export const API = {
         LOGIN : "/api/v1/auth/login",
         WHOAMI: '/api/v1/auth/whoami',
         UPDATE_PROFILE: '/api/v1/auth/update',
+        PREFERENCES: '/api/v1/auth/preferences',
+        SAVED_ROOMMATES: '/api/v1/auth/saved-roommates',
+        TOGGLE_SAVED_ROOMMATE: (id: string) => `/api/v1/auth/saved-roommates/${id}`,
     },
     LISTINGS: {
         BASE: "/api/v1/listings",
@@ -20,5 +23,30 @@ export const API = {
         DELETE_USER: (id: string) => `/api/v1/admin/users/${id}`,
         LISTINGS: "/api/v1/admin/listings",
         DELETE_LISTING: (id: string) => `/api/v1/admin/listings/${id}`,
-    }
+        APPLICATIONS: "/api/v1/admin/applications",
+        DELETE_APPLICATION: (id: string) => `/api/v1/admin/applications/${id}`,
+        REVIEWS: "/api/v1/admin/reviews",
+        DELETE_REVIEW: (id: string) => `/api/v1/admin/reviews/${id}`,
+    },
+    APPLICATIONS: {
+        BASE: "/api/v1/applications",
+        MY_APPLICATIONS: "/api/v1/applications/my-applications",
+        FOR_LISTING: (listingId: string) => `/api/v1/applications/listing/${listingId}`,
+        DETAIL: (id: string) => `/api/v1/applications/${id}`,
+        UPDATE_STATUS: (id: string) => `/api/v1/applications/${id}/status`,
+    },
+    REVIEWS: {
+        BASE: "/api/v1/reviews",
+        MY_REVIEWS: "/api/v1/reviews/my-reviews",
+        FOR_USER: (userId: string) => `/api/v1/reviews/user/${userId}`,
+        FOR_LISTING: (listingId: string) => `/api/v1/reviews/listing/${listingId}`,
+        DETAIL: (id: string) => `/api/v1/reviews/${id}`,
+    },
+    NOTIFICATIONS: {
+        BASE: "/api/v1/notifications",
+        UNREAD_COUNT: "/api/v1/notifications/unread-count",
+        MARK_READ: (id: string) => `/api/v1/notifications/${id}/read`,
+        MARK_ALL_READ: "/api/v1/notifications/read-all",
+        DETAIL: (id: string) => `/api/v1/notifications/${id}`,
+    },
 }
