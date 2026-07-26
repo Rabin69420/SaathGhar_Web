@@ -27,21 +27,23 @@ export default function Features() {
   ];
 
   return (
-    <section className="py-8">
-      <h2 className="text-center text-3xl font-bold text-slate-900 mb-2 relative after:content-[''] after:block after:w-16 after:h-1 after:bg-green-primary after:mx-auto after:mt-3">
+    <section className="py-16">
+      <h2 className="text-center text-3xl font-extrabold text-foreground mb-2 relative after:content-[''] after:block after:w-16 after:h-1 after:bg-secondary after:mx-auto after:mt-4 after:rounded-full">
         Why Choose SathGhar?
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
         {featuresList.map((feat, index) => (
           <div
             key={index}
-            className="bg-white p-8 rounded-xl shadow-sm border-t-4 border-teal-primary text-center hover:transform hover:-translate-y-1 transition-all duration-200"
+            className="bg-card border border-border hover:border-primary/30 rounded-2xl p-8 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col items-center text-center group"
           >
-            <div className="text-4xl mb-4">{feat.icon}</div>
-            <h3 className="text-xl font-bold text-slate-800 mb-3">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-3xl mb-6 shadow-xs group-hover:scale-110 transition-transform duration-300">
+              {feat.icon}
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-3">
               {feat.title}
             </h3>
-            <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {feat.description}
             </p>
           </div>

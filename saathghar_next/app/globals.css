@@ -56,6 +56,7 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.28 0.01 240);
   --input: oklch(0.22 0.01 240);
+  --input-background: oklch(0.22 0.01 240);
   --ring: oklch(0.64 0.17 187);
 }
 
@@ -85,3 +86,25 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+.animate-slide-down { animation: slideDown 0.2s ease-out; }
+.animate-scale-in { animation: scaleIn 0.2s ease-out; }

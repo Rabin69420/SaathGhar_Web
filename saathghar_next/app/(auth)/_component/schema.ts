@@ -9,8 +9,7 @@ export const loginSchema = z.object({
 // Shared registration validation schema
 export const registerSchema = z
   .object({
-    firstName: z.string().min(1, "First name is required").max(50),
-    lastName: z.string().min(1, "Last name is required").max(50),
+    fullName: z.string().min(1, "Full name is required").max(100, "Full name must be less than 100 characters"),
     username: z
       .string()
       .min(6, "Username must be at least 6 characters")
@@ -24,6 +23,9 @@ export const registerSchema = z
       .email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    phoneNumber: z
+      .string()
+      .min(10, "Phone number must be at least 10 characters long"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

@@ -7,8 +7,9 @@ export async function setTokenCookie(token: string) {
         name: "auth_token", 
         value: token,
         path: "/",         
-        secure: true,
-        httpOnly: true    
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+        sameSite: "lax"
     });
 }
 
@@ -23,6 +24,9 @@ export async function storeUserData(userData: any) {
         name: "user_data",
         value: JSON.stringify(userData), 
         path: "/",
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax"
     });
 }
 
@@ -36,11 +40,4 @@ export async function clearAuthCookies() {
     const cookieStore = await cookies();
     cookieStore.delete("auth_token");
     cookieStore.delete("user_data");
-}
-
-export async function getCookieClientSide(name: string): Promise<string | undefined> {
-    if (typeof window === "undefined") return undefined;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(";").shift();
 }
