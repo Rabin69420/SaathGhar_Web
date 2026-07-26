@@ -1,6 +1,6 @@
 "use server";
 
-import { getAdminStats, getAdminUsers, deleteAdminUser, getAdminListings, deleteAdminListing } from "../api/admin";
+import { getAdminStats, getAdminUsers, deleteAdminUser, getAdminListings, deleteAdminListing, getAdminApplications, deleteAdminApplication, getAdminReviews, deleteAdminReview } from "../api/admin";
 import { revalidatePath } from "next/cache";
 
 export const handleGetAdminStats = async () => {
@@ -63,5 +63,55 @@ export const handleDeleteAdminListing = async (id: string) => {
         return { success: false, message: response.message || "Failed to delete listing" };
     } catch (error: any) {
         return { success: false, message: error.message || "Delete listing action failed" };
+    }
+};
+
+export const handleGetAdminApplications = async () => {
+    try {
+        const response = await getAdminApplications();
+        if (response.success) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: response.message || "Failed to fetch applications" };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Fetch admin applications failed" };
+    }
+};
+
+export const handleDeleteAdminApplication = async (id: string) => {
+    try {
+        const response = await deleteAdminApplication(id);
+        if (response.success) {
+            revalidatePath("/admin/dashboard");
+            return { success: true, message: "Application deleted successfully" };
+        }
+        return { success: false, message: response.message || "Failed to delete application" };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Delete application action failed" };
+    }
+};
+
+export const handleGetAdminReviews = async () => {
+    try {
+        const response = await getAdminReviews();
+        if (response.success) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: response.message || "Failed to fetch reviews" };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Fetch admin reviews failed" };
+    }
+};
+
+export const handleDeleteAdminReview = async (id: string) => {
+    try {
+        const response = await deleteAdminReview(id);
+        if (response.success) {
+            revalidatePath("/admin/dashboard");
+            return { success: true, message: "Review deleted successfully" };
+        }
+        return { success: false, message: response.message || "Failed to delete review" };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Delete review action failed" };
     }
 };

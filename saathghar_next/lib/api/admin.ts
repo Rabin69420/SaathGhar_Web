@@ -45,3 +45,39 @@ export const deleteAdminListing = async (id: string) => {
         throw new Error(error.response?.data?.message || error.message || "Failed to delete listing");
     }
 };
+
+export const getAdminApplications = async () => {
+    try {
+        const response = await axiosInstance.get(API.ADMIN.APPLICATIONS);
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || error.message || "Failed to fetch admin applications");
+    }
+};
+
+export const deleteAdminApplication = async (id: string) => {
+    try {
+        const response = await axiosInstance.delete(API.ADMIN.DELETE_APPLICATION(id));
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || error.message || "Failed to delete application");
+    }
+};
+
+export const getAdminReviews = async () => {
+    try {
+        const response = await axiosInstance.get(API.ADMIN.REVIEWS);
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || error.message || "Failed to fetch admin reviews");
+    }
+};
+
+export const deleteAdminReview = async (id: string) => {
+    try {
+        const response = await axiosInstance.delete(API.ADMIN.DELETE_REVIEW(id));
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || error.message || "Failed to delete review");
+    }
+};
