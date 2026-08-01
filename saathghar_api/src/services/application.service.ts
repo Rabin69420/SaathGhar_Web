@@ -4,6 +4,7 @@ import { IApplication } from "../models/application.model";
 import { HttpException } from "../exceptions/http-exception";
 import { ItemMongoRepository } from "../repositories/item.repository";
 import { NotificationService } from "./notification.service";
+import { UserModel } from "../models/user.model";
 
 const applicationRepository = new ApplicationMongoRepository();
 const itemRepository = new ItemMongoRepository();
@@ -16,8 +17,14 @@ export class ApplicationService {
             throw new HttpException(404, "Listing not found");
         }
 
-        if (listing.owner.toString() === applicantId) {
+        const ownerId = (listing.owner as any)._id?.toString() || listing.owner.toString();
+        if (ownerId === applicantId) {
             throw new HttpException(400, "You cannot apply to your own listing");
+        }
+
+        const applicant = await UserModel.findById(applicantId);
+        if (!applicant || applicant.kycStatus !== "verified") {
+            throw new HttpException(403, "KYC verification required to apply for a room");
         }
 
         try {
@@ -28,13 +35,16 @@ export class ApplicationService {
                 status: "pending",
             });
 
-            notificationService.createNotification({
-                recipient: listing.owner.toString(),
-                type: "application_received",
-                title: "New Room Application",
-                message: `Someone applied to your listing "${listing.title}"`,
-                relatedId: application._id.toString(),
-            }).catch(() => {});
+            const admins = await UserModel.find({ role: "admin" }).select("_id");
+            for (const admin of admins) {
+                notificationService.createNotification({
+                    recipient: admin._id.toString(),
+                    type: "application_received",
+                    title: "New Room Application",
+                    message: `New application for "${listing.title}" needs your review`,
+                    relatedId: application._id.toString(),
+                }).catch(() => {});
+            }
 
             return application;
         } catch (error: any) {
@@ -49,13 +59,18 @@ export class ApplicationService {
         return applicationRepository.findByApplicant(applicantId);
     }
 
+    async getReceivedApplications(ownerId: string): Promise<IApplication[]> {
+        return applicationRepository.findByOwner(ownerId);
+    }
+
     async getApplicationsForListing(listingId: string, requesterId: string, isAdmin: boolean): Promise<IApplication[]> {
         const listing = await itemRepository.getItemById(listingId);
         if (!listing) {
             throw new HttpException(404, "Listing not found");
         }
 
-        if (listing.owner.toString() !== requesterId && !isAdmin) {
+        const ownerId = listing.owner?._id?.toString() || listing.owner?.toString();
+        if (ownerId !== requesterId && !isAdmin) {
             throw new HttpException(403, "Only the listing owner can view applications");
         }
 
@@ -87,27 +102,78 @@ export class ApplicationService {
 
         const listingOwnerId = (application.listing as any)?.owner?._id?.toString() ||
             (application.listing as any)?.owner?.toString();
-
-        if (listingOwnerId !== requesterId && !isAdmin) {
-            throw new HttpException(403, "Only the listing owner can accept or reject applications");
-        }
-
-        const updated = await applicationRepository.updateStatus(id, status);
-        if (!updated) {
-            throw new HttpException(400, "Failed to update application status");
-        }
-
-        const notifType = status === "accepted" ? "application_accepted" : "application_rejected";
         const listingTitle = (application.listing as any)?.title || "a listing";
-        notificationService.createNotification({
-            recipient: application.applicant._id.toString(),
-            type: notifType,
-            title: `Application ${status.charAt(0).toUpperCase() + status.slice(1)}`,
-            message: `Your application to "${listingTitle}" has been ${status}`,
-            relatedId: id,
-        }).catch(() => {});
 
-        return updated;
+        if (status === "approved") {
+            if (!isAdmin) {
+                throw new HttpException(403, "Only an admin can approve applications");
+            }
+            if (application.status !== "pending") {
+                throw new HttpException(400, "Only pending applications can be approved");
+            }
+
+            const updated = await applicationRepository.updateStatus(id, status);
+            if (!updated) {
+                throw new HttpException(400, "Failed to update application status");
+            }
+
+            if (listingOwnerId) {
+                notificationService.createNotification({
+                    recipient: listingOwnerId,
+                    type: "application_approved",
+                    title: "Application Forwarded to You",
+                    message: `An application for your listing "${listingTitle}" has been approved by admin and needs your decision`,
+                    relatedId: id,
+                }).catch(() => {});
+            }
+
+            return updated;
+        }
+
+        if (status === "rejected" && application.status === "pending") {
+            if (!isAdmin) {
+                throw new HttpException(403, "Only an admin can reject pending applications");
+            }
+
+            const updated = await applicationRepository.updateStatus(id, status);
+            if (!updated) {
+                throw new HttpException(400, "Failed to update application status");
+            }
+
+            notificationService.createNotification({
+                recipient: application.applicant._id.toString(),
+                type: "application_rejected",
+                title: "Application Declined",
+                message: `Your application to "${listingTitle}" was declined by admin`,
+                relatedId: id,
+            }).catch(() => {});
+
+            return updated;
+        }
+
+        if ((status === "accepted" || status === "rejected") && application.status === "approved") {
+            if (listingOwnerId !== requesterId && !isAdmin) {
+                throw new HttpException(403, "Only the listing owner can accept or reject approved applications");
+            }
+
+            const updated = await applicationRepository.updateStatus(id, status);
+            if (!updated) {
+                throw new HttpException(400, "Failed to update application status");
+            }
+
+            const notifType = status === "accepted" ? "application_accepted" : "application_rejected";
+            notificationService.createNotification({
+                recipient: application.applicant._id.toString(),
+                type: notifType,
+                title: `Application ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+                message: `Your application to "${listingTitle}" has been ${status} by the listing owner`,
+                relatedId: id,
+            }).catch(() => {});
+
+            return updated;
+        }
+
+        throw new HttpException(400, `Cannot change status from "${application.status}" to "${status}"`);
     }
 
     async deleteApplication(id: string, requesterId: string, isAdmin: boolean): Promise<boolean> {

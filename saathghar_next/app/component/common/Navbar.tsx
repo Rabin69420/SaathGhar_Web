@@ -7,12 +7,14 @@ import { getCookieClientSide } from "@/lib/cookies-client";
 import { handleLogoutUser } from "@/lib/actions/auth-action";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
+import ConfirmModal from "./ConfirmModal";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -44,19 +46,17 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    ...(!user || user.role !== "admin"
+    ...(!user
       ? [{ href: "/", label: "Home", active: pathname === "/" }]
       : []),
     ...(user
       ? [
-          { href: "/dashboard", label: "Dashboard", active: pathname === "/dashboard" },
+          { href: "/dashboard", label: "Home", active: pathname === "/dashboard" },
           { href: "/dashboard/applications", label: "Applications", active: pathname.startsWith("/dashboard/applications") },
           { href: "/dashboard/reviews", label: "Reviews", active: pathname.startsWith("/dashboard/reviews") },
+          { href: "/dashboard/kyc", label: "KYC", active: pathname.startsWith("/dashboard/kyc") },
           { href: "/user/preferences", label: "Preferences", active: pathname === "/user/preferences" },
           { href: "/user/profile", label: "Profile", active: pathname === "/user/profile" },
-          ...(user.role === "admin"
-            ? [{ href: "/admin/dashboard", label: "Admin Panel", active: pathname === "/admin/dashboard" }]
-            : []),
         ]
       : []),
   ];
@@ -66,7 +66,7 @@ export default function Navbar() {
       <div className="flex justify-between items-center px-6 py-4 md:px-12">
         <div className="flex flex-col">
           <Link
-            href={user?.role === "admin" ? "/admin/dashboard" : "/"}
+            href={user?.role === "admin" ? "/admin/dashboard" : user ? "/dashboard" : "/"}
             className="text-2xl font-bold tracking-tight text-teal-600 hover:text-teal-700 transition-colors"
           >
             SathGhar
@@ -76,15 +76,15 @@ export default function Navbar() {
           </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-semibold transition-colors ${
+              className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-all ${
                 link.active
-                  ? "text-teal-600"
-                  : "text-slate-600 dark:text-slate-300 hover:text-teal-600"
+                  ? "text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               {link.label}
@@ -119,7 +119,7 @@ export default function Navbar() {
                 </span>
               </div>
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="px-4 py-2 text-sm text-red-600 hover:text-red-700 font-semibold border border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all"
               >
                 Logout
@@ -172,8 +172,8 @@ export default function Navbar() {
               href={link.href}
               className={`block py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors ${
                 link.active
-                  ? "bg-teal-50 dark:bg-teal-950/30 text-teal-600"
-                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  ? "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               {link.label}
@@ -181,6 +181,20 @@ export default function Navbar() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Logout"
+        message="Are you sure you want to log out?"
+        confirmLabel="Logout"
+        cancelLabel="No"
+        variant="danger"
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          handleLogout();
+        }}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </nav>
   );
 }

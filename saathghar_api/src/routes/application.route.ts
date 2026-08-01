@@ -7,6 +7,7 @@ const applicationController = new ApplicationController();
 
 applicationRouter.post("/", authorizedMiddleware, applicationController.createApplication);
 applicationRouter.get("/my-applications", authorizedMiddleware, applicationController.getMyApplications);
+applicationRouter.get("/my-received", authorizedMiddleware, applicationController.getReceivedApplications);
 applicationRouter.get("/listing/:listingId", authorizedMiddleware, applicationController.getApplicationsForListing);
 applicationRouter.get("/:id", authorizedMiddleware, applicationController.getApplicationById);
 applicationRouter.put("/:id/status", authorizedMiddleware, applicationController.updateApplicationStatus);

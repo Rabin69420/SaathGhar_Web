@@ -1,55 +1,125 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { handleGetPreferences, handleUpdatePreferences, handleResetPreferences } from "@/lib/actions/preferences-action";
 import ConfirmModal from "@/app/component/common/ConfirmModal";
 
 const PREFERENCE_OPTIONS = {
-    cleanliness: { label: "Cleanliness", options: ["High", "Medium", "Low"] },
-    noiseLevel: { label: "Noise Level", options: ["Quiet", "Moderate", "Loud"] },
-    sleepSchedule: { label: "Sleep Schedule", options: ["Early Bird", "Night Owl", "Flexible"] },
-    diet: { label: "Diet", options: ["No preference", "Vegetarian", "Vegan", "Non-Vegetarian"] },
-    smoking: { label: "Smoking", options: ["Non-smoker", "Smoker", "Outside only"] },
-    pets: { label: "Pets", options: ["Pet friendly", "No pets", "Have pets"] },
-    guests: { label: "Guests", options: ["No guests", "Occasionally", "Frequently"] },
+    cleanliness: {
+        label: "Cleanliness",
+        description: "How tidy do you keep your space?",
+        options: [
+            { value: "High", label: "High", detail: "Very tidy & organized" },
+            { value: "Medium", label: "Medium", detail: "Average cleanliness" },
+            { value: "Low", label: "Low", detail: "Relaxed about tidiness" },
+        ],
+    },
+    noiseLevel: {
+        label: "Noise Level",
+        description: "What noise environment do you prefer?",
+        options: [
+            { value: "Quiet", label: "Quiet", detail: "Prefers peace & calm" },
+            { value: "Moderate", label: "Moderate", detail: "Average noise is fine" },
+            { value: "Loud", label: "Loud", detail: "Music & activity welcome" },
+        ],
+    },
+    sleepSchedule: {
+        label: "Sleep Schedule",
+        description: "When do you usually sleep and wake up?",
+        options: [
+            { value: "Early Bird", label: "Early Bird", detail: "Up early, sleep early" },
+            { value: "Night Owl", label: "Night Owl", detail: "Stay up late, wake late" },
+            { value: "Flexible", label: "Flexible", detail: "Variable schedule" },
+        ],
+    },
+    diet: {
+        label: "Diet",
+        description: "Any dietary preferences or restrictions?",
+        options: [
+            { value: "No preference", label: "No preference", detail: "Eats everything" },
+            { value: "Vegetarian", label: "Vegetarian", detail: "No meat" },
+            { value: "Vegan", label: "Vegan", detail: "No animal products" },
+            { value: "Non-Vegetarian", label: "Non-Vegetarian", detail: "Includes meat" },
+        ],
+    },
+    smoking: {
+        label: "Smoking",
+        description: "Your smoking habits or tolerance?",
+        options: [
+            { value: "Non-smoker", label: "Non-smoker", detail: "Doesn't smoke" },
+            { value: "Smoker", label: "Smoker", detail: "Smokes regularly" },
+            { value: "Outside only", label: "Outside only", detail: "Smokes outdoors" },
+        ],
+    },
+    pets: {
+        label: "Pets",
+        description: "How do you feel about pets?",
+        options: [
+            { value: "Pet friendly", label: "Pet friendly", detail: "Loves animals" },
+            { value: "No pets", label: "No pets", detail: "Prefers pet-free" },
+            { value: "Have pets", label: "Have pets", detail: "Currently has pets" },
+        ],
+    },
+    guests: {
+        label: "Guests",
+        description: "How often do you have visitors?",
+        options: [
+            { value: "No guests", label: "No guests", detail: "Prefers no visitors" },
+            { value: "Occasionally", label: "Occasionally", detail: "Sometimes has guests" },
+            { value: "Frequently", label: "Frequently", detail: "Often has visitors" },
+        ],
+    },
 };
 
 type PrefKey = keyof typeof PREFERENCE_OPTIONS;
 
+const EMPTY: Record<string, string> = {
+    preferredLocation: "", maxRent: "", propertyType: "",
+    cleanliness: "", noiseLevel: "", sleepSchedule: "",
+    diet: "", smoking: "", pets: "", guests: "", additionalInfo: "",
+};
+
 export default function PreferencesPage() {
-    const [preferences, setPreferences] = useState<Record<string, string>>({
-        cleanliness: "Medium",
-        noiseLevel: "Moderate",
-        sleepSchedule: "Flexible",
-        diet: "No preference",
-        smoking: "Non-smoker",
-        pets: "Pet friendly",
-        guests: "Occasionally",
-        additionalInfo: "",
-    });
+    const [preferences, setPreferences] = useState<Record<string, string>>(EMPTY);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [resetModal, setResetModal] = useState(false);
-
-    useEffect(() => {
-        fetchPreferences();
-    }, []);
+    const router = useRouter();
 
     const fetchPreferences = async () => {
-        setLoading(true);
         const res = await handleGetPreferences();
         if (res.success && res.data) {
-            setPreferences(prev => ({ ...prev, ...res.data }));
+            setPreferences({ ...EMPTY, ...res.data, maxRent: res.data.maxRent ? String(res.data.maxRent) : "" });
         }
         setLoading(false);
     };
 
+    useEffect(() => {
+        const timeout = setTimeout(fetchPreferences, 0);
+        return () => clearTimeout(timeout);
+    }, []);
+
     const handleSave = async () => {
         setSaving(true);
-        const res = await handleUpdatePreferences(preferences);
+        const payload: Record<string, string | number> = {};
+        for (const key of Object.keys(preferences)) {
+            const value = preferences[key];
+            if (value === undefined || value === null) continue;
+            const trimmed = String(value).trim();
+            if (trimmed === "") continue;
+            if (key === "maxRent") {
+                const num = Number(trimmed);
+                if (!Number.isNaN(num) && num > 0) payload[key] = num;
+                continue;
+            }
+            payload[key] = trimmed;
+        }
+        const res = await handleUpdatePreferences(payload);
         if (res.success) {
             toast.success(res.message);
+            fetchPreferences();
         } else {
             toast.error(res.message);
         }
@@ -60,32 +130,35 @@ export default function PreferencesPage() {
         const res = await handleResetPreferences();
         if (res.success) {
             toast.success(res.message);
-            setPreferences({
-                cleanliness: "Medium",
-                noiseLevel: "Moderate",
-                sleepSchedule: "Flexible",
-                diet: "No preference",
-                smoking: "Non-smoker",
-                pets: "Pet friendly",
-                guests: "Occasionally",
-                additionalInfo: "",
-            });
+            fetchPreferences();
         } else {
             toast.error(res.message);
         }
         setResetModal(false);
     };
 
+    const selectPref = (key: string, value: string) => {
+        setPreferences(prev => ({
+            ...prev,
+            [key]: prev[key] === value ? "" : value,
+        }));
+    };
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0f] py-8 px-4">
-                <div className="max-w-3xl mx-auto">
-                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-6 animate-pulse"></div>
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-8 space-y-6">
-                        {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                            <div key={i} className="animate-pulse">
-                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
-                                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="py-8 px-6 md:px-12">
+                <div className="max-w-3xl mx-auto space-y-6">
+                    <div className="h-8 bg-muted rounded-lg w-64 animate-pulse" />
+                    <div className="h-4 bg-muted rounded w-96 animate-pulse" />
+                    <div className="space-y-4 mt-6">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="bg-card border border-border rounded-2xl p-6 animate-pulse">
+                                <div className="h-5 bg-muted rounded w-32 mb-3" />
+                                <div className="flex gap-3">
+                                    <div className="h-10 bg-muted rounded-lg flex-1" />
+                                    <div className="h-10 bg-muted rounded-lg flex-1" />
+                                    <div className="h-10 bg-muted rounded-lg flex-1" />
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -95,70 +168,175 @@ export default function PreferencesPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0f] py-8 px-4">
+        <div className="py-8 px-6 md:px-12">
             <div className="max-w-3xl mx-auto">
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Roommate Preferences</h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">Set your lifestyle preferences to get better compatibility matches.</p>
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-1">
+                        <button
+                            onClick={() => router.back()}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </button>
+                        <h1 className="text-2xl font-bold text-foreground">Roommate Preferences</h1>
+                    </div>
+                    <p className="text-sm text-muted-foreground ml-9">
+                        Set your lifestyle preferences to find the best match. Click an option to select it, or leave it unselected for no preference.
+                    </p>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {(Object.keys(PREFERENCE_OPTIONS) as PrefKey[]).map(key => (
-                            <div key={key}>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    {PREFERENCE_OPTIONS[key].label}
-                                </label>
-                                <select
-                                    value={preferences[key] || ""}
-                                    onChange={(e) => setPreferences(prev => ({ ...prev, [key]: e.target.value }))}
-                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                >
-                                    {PREFERENCE_OPTIONS[key].options.map(opt => (
-                                        <option key={opt} value={opt}>{opt}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        ))}
+                {/* Preference Cards */}
+                <div className="space-y-4">
+                    {/* Room Preferences */}
+                    <div className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xs">
+                        <div className="mb-3">
+                            <h3 className="text-sm font-semibold text-foreground">Room Preferences</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">Your ideal home, budget, and location.</p>
+                        </div>
 
-                        <div className="sm:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Additional Info
-                            </label>
-                            <textarea
-                                value={preferences.additionalInfo || ""}
-                                onChange={(e) => setPreferences(prev => ({ ...prev, additionalInfo: e.target.value }))}
-                                rows={3}
-                                placeholder="Study habits, hobbies, work schedule..."
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                                maxLength={500}
-                            />
-                            <p className="text-xs text-gray-400 mt-1">{(preferences.additionalInfo || "").length}/500</p>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label className="text-xs font-medium text-muted-foreground">Preferred Location</label>
+                                <input
+                                    type="text"
+                                    value={preferences.preferredLocation || ""}
+                                    onChange={(e) => setPreferences(prev => ({ ...prev, preferredLocation: e.target.value }))}
+                                    placeholder="e.g. Kathmandu, Pokhara, Bhaktapur..."
+                                    className="mt-1.5 w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-medium text-muted-foreground">Maximum Rent (Rs./month)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={preferences.maxRent || ""}
+                                    onChange={(e) => setPreferences(prev => ({ ...prev, maxRent: e.target.value }))}
+                                    placeholder="e.g. 15000"
+                                    className="mt-1.5 w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-4">
+                            <label className="text-xs font-medium text-muted-foreground">Preferred Property Type</label>
+                            <div className="flex flex-wrap gap-2 mt-1.5">
+                                {["Room", "Shared Room", "Apartment", "Studio", "House", "Hostel"].map(opt => {
+                                    const isSelected = preferences.propertyType === opt;
+                                    return (
+                                        <button
+                                            key={opt}
+                                            type="button"
+                                            onClick={() => selectPref("propertyType", opt)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
+                                                isSelected
+                                                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                                    : "bg-input-background text-foreground border-border hover:border-primary/40 hover:bg-accent"
+                                            }`}
+                                        >
+                                            {opt}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex gap-3 mt-8">
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                        >
-                            {saving ? "Saving..." : "Save Preferences"}
-                        </button>
-                        <button
-                            onClick={() => setResetModal(true)}
-                            className="px-6 py-3 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        >
-                            Reset to Defaults
-                        </button>
+                    {(Object.keys(PREFERENCE_OPTIONS) as PrefKey[]).map(key => {
+                        const pref = PREFERENCE_OPTIONS[key];
+                        const selected = preferences[key];
+
+                        return (
+                            <div
+                                key={key}
+                                className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xs transition-all"
+                            >
+                                <div className="mb-3">
+                                    <h3 className="text-sm font-semibold text-foreground">{pref.label}</h3>
+                                    <p className="text-xs text-muted-foreground mt-0.5">{pref.description}</p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {pref.options.map(opt => {
+                                        const isSelected = selected === opt.value;
+                                        return (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => selectPref(key, opt.value)}
+                                                className={`group relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                                                    isSelected
+                                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                                        : "bg-input-background text-foreground border-border hover:border-primary/40 hover:bg-accent"
+                                                }`}
+                                            >
+                                                <span>{opt.label}</span>
+                                                <span className={`block text-[11px] font-normal mt-0.5 ${
+                                                    isSelected
+                                                        ? "text-primary-foreground/75"
+                                                        : "text-muted-foreground"
+                                                }`}>
+                                                    {opt.detail}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {!selected && (
+                                    <p className="text-xs text-muted-foreground/70 mt-2 italic">No preference selected</p>
+                                )}
+                            </div>
+                        );
+                    })}
+
+                    {/* Additional Info */}
+                    <div className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xs">
+                        <div className="mb-3">
+                            <h3 className="text-sm font-semibold text-foreground">About You</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Describe your lifestyle, habits, or anything a potential roommate should know.
+                            </p>
+                        </div>
+                        <textarea
+                            value={preferences.additionalInfo || ""}
+                            onChange={(e) => setPreferences(prev => ({ ...prev, additionalInfo: e.target.value }))}
+                            rows={3}
+                            placeholder="E.g. I'm a student studying IT. I value quiet study time and keep things neat..."
+                            className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs resize-none"
+                            maxLength={500}
+                        />
+                        <div className="flex justify-end mt-1.5">
+                            <span className="text-xs text-muted-foreground">{(preferences.additionalInfo || "").length}/500</span>
+                        </div>
                     </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-6 flex gap-3">
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex-1 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg shadow-sm hover:bg-primary/95 hover:scale-[1.01] active:scale-100 disabled:opacity-50 transition-all text-sm"
+                    >
+                        {saving ? "Saving..." : "Save Preferences"}
+                    </button>
+                    <button
+                        onClick={() => setResetModal(true)}
+                        className="px-5 py-2.5 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-muted transition-all"
+                    >
+                        Reset
+                    </button>
                 </div>
             </div>
 
             <ConfirmModal
                 isOpen={resetModal}
                 title="Reset Preferences"
-                message="This will reset all your roommate preferences to default values. Continue?"
+                message="This will clear all your roommate preferences. Continue?"
                 confirmLabel="Reset"
                 variant="danger"
                 onConfirm={handleReset}

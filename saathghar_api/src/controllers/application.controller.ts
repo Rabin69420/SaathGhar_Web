@@ -39,6 +39,19 @@ export class ApplicationController {
         }
     }
 
+    async getReceivedApplications(req: Request, res: Response) {
+        try {
+            if (!req.user) {
+                return ApiResponseHelper.error(res, "Unauthorized", 401);
+            }
+            const ownerId = (req.user as any)._id.toString();
+            const applications = await applicationService.getReceivedApplications(ownerId);
+            return ApiResponseHelper.success(res, applications, "Received applications fetched successfully");
+        } catch (error: any) {
+            return ApiResponseHelper.error(res, error.message || "Internal Server Error", error.status || 500);
+        }
+    }
+
     async getApplicationsForListing(req: Request, res: Response) {
         try {
             if (!req.user) {

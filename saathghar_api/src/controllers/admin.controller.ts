@@ -4,6 +4,7 @@ import { ItemMongoRepository } from "../repositories/item.repository";
 import { ApplicationMongoRepository } from "../repositories/application.repository";
 import { ReviewMongoRepository } from "../repositories/review.repository";
 import { ApiResponseHelper } from "../utils/apiResponseHelper.utils";
+import { UserModel } from "../models/user.model";
 
 const userRepository = new UserMongoRepository();
 const itemRepository = new ItemMongoRepository();
@@ -17,12 +18,14 @@ export class AdminController {
             const items = await itemRepository.getAllItems();
             const applications = await applicationRepository.findAll();
             const reviews = await reviewRepository.findAll();
+            const pendingKyc = await UserModel.countDocuments({ kycStatus: "pending" });
 
             const stats = {
                 totalUsers: users.length,
                 totalListings: items.length,
                 totalApplications: applications.length,
                 totalReviews: reviews.length,
+                pendingKyc,
             };
 
             return ApiResponseHelper.success(res, stats, "Admin statistics fetched successfully");

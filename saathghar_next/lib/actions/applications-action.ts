@@ -52,7 +52,7 @@ export const handleGetApplicationById = async (id: string) => {
     }
 };
 
-export const handleUpdateApplicationStatus = async (id: string, status: "accepted" | "rejected") => {
+export const handleUpdateApplicationStatus = async (id: string, status: "approved" | "accepted" | "rejected") => {
     try {
         const response = await updateApplicationStatus(id, status);
         if (response.success) {

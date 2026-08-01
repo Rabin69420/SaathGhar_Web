@@ -4,7 +4,7 @@ const notificationRepo = new NotificationRepository();
 
 export class NotificationService {
     async createNotification(data: { recipient: string; type: string; title: string; message: string; relatedId?: string }) {
-        return notificationRepo.create(data);
+        return notificationRepo.create(data as any);
     }
 
     async getNotifications(userId: string) {

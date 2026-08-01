@@ -7,6 +7,12 @@ const itemRepository = new ItemMongoRepository();
 
 export class ItemService {
     async createItem(itemData: CreateItemDTO, ownerId: string): Promise<IItem> {
+        const { UserModel } = await import("../models/user.model");
+        const user = await UserModel.findById(ownerId);
+        if (!user || user.kycStatus !== "verified") {
+            throw new HttpException(403, "KYC verification required to post a listing");
+        }
+
         const item = await itemRepository.createItem({
             ...itemData,
             owner: ownerId as any
@@ -33,7 +39,8 @@ export class ItemService {
         }
 
         // Only owner or admin can update
-        if (item.owner.toString() !== userId && !isAdmin) {
+        const ownerId = (item.owner as any)._id?.toString() || item.owner.toString();
+        if (ownerId !== userId && !isAdmin) {
             throw new HttpException(403, "You do not have permission to update this item");
         }
 
@@ -51,7 +58,8 @@ export class ItemService {
         }
 
         // Only owner or admin can delete
-        if (item.owner.toString() !== userId && !isAdmin) {
+        const ownerId = (item.owner as any)._id?.toString() || item.owner.toString();
+        if (ownerId !== userId && !isAdmin) {
             throw new HttpException(403, "You do not have permission to delete this item");
         }
 

@@ -1,10 +1,12 @@
 import { ApplicationModel, IApplication } from "../models/application.model";
+import { ItemModel } from "../models/item.model";
 
 export interface IApplicationRepository {
     create(data: Partial<IApplication>): Promise<IApplication>;
     findById(id: string): Promise<IApplication | null>;
     findByListing(listingId: string): Promise<IApplication[]>;
     findByApplicant(applicantId: string): Promise<IApplication[]>;
+    findByOwner(ownerId: string): Promise<IApplication[]>;
     updateStatus(id: string, status: string): Promise<IApplication | null>;
     delete(id: string): Promise<boolean>;
 }
@@ -34,6 +36,18 @@ export class ApplicationMongoRepository implements IApplicationRepository {
     async findByApplicant(applicantId: string): Promise<IApplication[]> {
         return ApplicationModel.find({ applicant: applicantId })
             .populate("applicant", "fullName username email phoneNumber imageUrl")
+            .populate({ path: "listing", select: "title location rent image owner", populate: { path: "owner", select: "fullName username email" } })
+            .sort({ createdAt: -1 });
+    }
+
+    async findByOwner(ownerId: string): Promise<IApplication[]> {
+        const ownedListings = await ItemModel.find({ owner: ownerId }).select("_id");
+        const listingIds = ownedListings.map((item) => item._id);
+        if (listingIds.length === 0) {
+            return [];
+        }
+        return ApplicationModel.find({ listing: { $in: listingIds } })
+            .populate("applicant", "fullName username email phoneNumber imageUrl preferences")
             .populate({ path: "listing", select: "title location rent image owner", populate: { path: "owner", select: "fullName username email" } })
             .sort({ createdAt: -1 });
     }

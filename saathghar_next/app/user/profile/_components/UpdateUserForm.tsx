@@ -26,16 +26,7 @@ export const updateUserSchema = z.object({
         .refine((file) => !file || ACCEPTED_IMAGE_TYPES.includes(file.type), {
             message: "Only .jpg, .jpeg, .png and .webp formats are supported",
         }),
-    preferences: z.object({
-        cleanliness: z.string().optional(),
-        noiseLevel: z.string().optional(),
-        sleepSchedule: z.string().optional(),
-        diet: z.string().optional(),
-        smoking: z.string().optional(),
-        pets: z.string().optional(),
-        guests: z.string().optional(),
-        additionalInfo: z.string().optional()
-    }).optional()
+
 });
 
 export type UpdateUserData = z.infer<typeof updateUserSchema>;
@@ -52,16 +43,6 @@ export default function UpdateUserForm({
                 email: user?.email || '',
                 username: user?.username || '',
                 phoneNumber: user?.phoneNumber || '',
-                preferences: {
-                    cleanliness: user?.preferences?.cleanliness || 'Medium',
-                    noiseLevel: user?.preferences?.noiseLevel || 'Moderate',
-                    sleepSchedule: user?.preferences?.sleepSchedule || 'Flexible',
-                    diet: user?.preferences?.diet || 'No preference',
-                    smoking: user?.preferences?.smoking || 'Non-smoker',
-                    pets: user?.preferences?.pets || 'Pet friendly',
-                    guests: user?.preferences?.guests || 'Occasionally',
-                    additionalInfo: user?.preferences?.additionalInfo || ''
-                }
             }
         });
 
@@ -99,9 +80,6 @@ export default function UpdateUserForm({
             formData.append('email', data.email);
             formData.append('username', data.username);
             formData.append('phoneNumber', data.phoneNumber);
-            if (data.preferences) {
-                formData.append('preferences', JSON.stringify(data.preferences));
-            }
             if (data.image) {
                 formData.append('image', data.image);
             }
@@ -256,115 +234,6 @@ export default function UpdateUserForm({
                             placeholder="e.g. 98XXXXXXXX"
                         />
                         {errors.phoneNumber && <p className="text-xs text-destructive mt-1">{errors.phoneNumber.message}</p>}
-                    </div>
-                </div>
-
-                {/* Roommate Preferences Section */}
-                <div className="pt-6 border-t border-border">
-                    <h3 className="text-lg font-bold text-foreground mb-4">Lifestyle & Roommate Preferences</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-foreground" htmlFor="cleanliness">Cleanliness</label>
-                            <select
-                                id="cleanliness"
-                                {...register("preferences.cleanliness")}
-                                className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
-                            >
-                                <option value="High">High (Very tidy & organized)</option>
-                                <option value="Medium">Medium (Average cleanliness)</option>
-                                <option value="Low">Low (Relaxed cleanliness)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-foreground" htmlFor="noiseLevel">Noise Level Tolerance</label>
-                            <select
-                                id="noiseLevel"
-                                {...register("preferences.noiseLevel")}
-                                className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
-                            >
-                                <option value="Quiet">Quiet (Prefers peace & calm)</option>
-                                <option value="Moderate">Moderate (Average noise okay)</option>
-                                <option value="Loud">Loud (Active, music/parties okay)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-foreground" htmlFor="sleepSchedule">Sleep Schedule</label>
-                            <select
-                                id="sleepSchedule"
-                                {...register("preferences.sleepSchedule")}
-                                className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
-                            >
-                                <option value="Early Bird">Early Bird (Wake up early, sleep early)</option>
-                                <option value="Night Owl">Night Owl (Stay up late, wake up late)</option>
-                                <option value="Flexible">Flexible (Variable schedule)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-foreground" htmlFor="diet">Diet Preference</label>
-                            <select
-                                id="diet"
-                                {...register("preferences.diet")}
-                                className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
-                            >
-                                <option value="No preference">No preference</option>
-                                <option value="Vegetarian">Vegetarian</option>
-                                <option value="Vegan">Vegan</option>
-                                <option value="Non-Vegetarian">Non-Vegetarian</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-foreground" htmlFor="smoking">Smoking Policy</label>
-                            <select
-                                id="smoking"
-                                {...register("preferences.smoking")}
-                                className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
-                            >
-                                <option value="Non-smoker">Non-smoker</option>
-                                <option value="Smoker">Smoker</option>
-                                <option value="Outside only">Outside only</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-foreground" htmlFor="pets">Pets Policy</label>
-                            <select
-                                id="pets"
-                                {...register("preferences.pets")}
-                                className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
-                            >
-                                <option value="Pet friendly">Pet friendly (Love pets)</option>
-                                <option value="No pets">No pets allowed / Prefers no pets</option>
-                                <option value="Have pets">I have pets</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-foreground" htmlFor="guests">Guest Policy</label>
-                            <select
-                                id="guests"
-                                {...register("preferences.guests")}
-                                className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
-                            >
-                                <option value="No guests">No guests</option>
-                                <option value="Occasionally">Occasionally allowed</option>
-                                <option value="Frequently">Frequently allowed</option>
-                            </select>
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium mb-1.5 text-foreground" htmlFor="additionalInfo">Describe Yourself / Preferences</label>
-                            <textarea
-                                id="additionalInfo"
-                                rows={3}
-                                {...register("preferences.additionalInfo")}
-                                placeholder="E.g. I am a student studying IT. I value quiet study time and keep my room neat..."
-                                className="w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs resize-none"
-                            />
-                        </div>
                     </div>
                 </div>
 

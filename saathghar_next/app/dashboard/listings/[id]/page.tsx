@@ -6,6 +6,7 @@ import { handleGetListingById, handleDeleteListing, handleGetBookmarkedListings,
 import { handleWhoami } from "@/lib/actions/auth-action";
 import { handleCreateApplication } from "@/lib/actions/applications-action";
 import { handleGetReviewsForListing } from "@/lib/actions/reviews-action";
+import { handleGetKycStatus } from "@/lib/actions/kyc-action";
 import { toast } from "react-toastify";
 import ConfirmModal from "@/app/component/common/ConfirmModal";
 import StarRating from "@/app/component/common/StarRating";
@@ -27,6 +28,7 @@ export default function ListingDetailPage() {
   const [applyMessage, setApplyMessage] = useState("");
   const [applyingSubmitting, setApplyingSubmitting] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [kycVerified, setKycVerified] = useState<boolean | null>(null);
 
   // Preference states for checker
   const [cleanliness, setCleanliness] = useState("Medium");
@@ -69,7 +71,14 @@ export default function ListingDetailPage() {
         initializePreferences(res.data);
       }
     };
+    const fetchKycStatus = async () => {
+      const res = await handleGetKycStatus();
+      if (res.success && res.data) {
+        setKycVerified(res.data.kycStatus === "verified");
+      }
+    };
     fetchUser();
+    fetchKycStatus();
   }, [params.id]);
 
   const loadListing = async () => {
@@ -705,6 +714,23 @@ export default function ListingDetailPage() {
           {/* Apply for Room button (non-owners only) */}
           {!isOwner && currentUser && (
             <div className="border-t border-slate-100 pt-6">
+              {kycVerified === false ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-3">
+                  <svg className="w-8 h-8 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <div className="flex-1 text-center sm:text-left">
+                    <p className="text-sm font-bold text-amber-700">KYC Verification Required</p>
+                    <p className="text-xs text-amber-600">Verify your identity to apply for rooms.</p>
+                  </div>
+                  <Link
+                    href="/dashboard/kyc"
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition-all"
+                  >
+                    Verify Now
+                  </Link>
+                </div>
+              ) : (
               <button
                 onClick={() => setApplyModalOpen(true)}
                 className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
@@ -714,6 +740,7 @@ export default function ListingDetailPage() {
                 </svg>
                 Apply for this Room
               </button>
+              )}
             </div>
           )}
 

@@ -49,4 +49,10 @@ export const API = {
         MARK_ALL_READ: "/api/v1/notifications/read-all",
         DETAIL: (id: string) => `/api/v1/notifications/${id}`,
     },
+    KYC: {
+        SUBMIT: "/api/v1/kyc/submit",
+        STATUS: "/api/v1/kyc/status",
+        PENDING: "/api/v1/kyc/pending",
+        REVIEW: (userId: string) => `/api/v1/kyc/${userId}`,
+    },
 }
