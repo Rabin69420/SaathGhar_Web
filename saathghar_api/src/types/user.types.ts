@@ -1,4 +1,11 @@
 import {z} from "zod";
+
+export const KycDocumentSchema = z.object({
+    type: z.enum(["front", "back"]),
+    filename: z.string(),
+    uploadedAt: z.date().or(z.string()).optional()
+});
+
 export const UserSchema = z.object({
     fullName: z.string().min(2, "Full name is required"),
     username: z.string().min(6, "Username must be at least 6 characters long"),
@@ -9,6 +16,9 @@ export const UserSchema = z.object({
     firstName: z.string().optional(),
     lastName: z.string().optional(),
     imageUrl: z.string().optional(),
+    kycStatus: z.enum(["unverified", "pending", "verified", "rejected"]).default("unverified"),
+    kycDocuments: z.array(KycDocumentSchema).optional(),
+    kycRejectionReason: z.string().optional(),
     preferences: z.object({
         cleanliness: z.string().optional(),
         noiseLevel: z.string().optional(),
@@ -22,3 +32,4 @@ export const UserSchema = z.object({
 });
 
 export type UserTypes = z.infer<typeof UserSchema>;
+export type KycDocumentType = z.infer<typeof KycDocumentSchema>;

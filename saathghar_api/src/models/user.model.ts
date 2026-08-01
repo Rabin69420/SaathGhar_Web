@@ -5,6 +5,9 @@ export interface IUser extends UserTypes, mongoose.Document {
     _id: mongoose.Types.ObjectId;
     bookmarks?: mongoose.Types.ObjectId[];
     savedRoommates?: mongoose.Types.ObjectId[];
+    kycStatus: "unverified" | "pending" | "verified" | "rejected";
+    kycDocuments?: { type: "front" | "back"; filename: string; uploadedAt: Date }[];
+    kycRejectionReason?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -22,6 +25,13 @@ const UserMongoSchema = new Schema<IUser>(
         imageUrl: { type: String },
         bookmarks: [{ type: Schema.Types.ObjectId, ref: "Item", default: [] }],
         savedRoommates: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
+        kycStatus: { type: String, enum: ["unverified", "pending", "verified", "rejected"], default: "unverified" },
+        kycDocuments: [{
+            type: { type: String, enum: ["front", "back"] },
+            filename: { type: String },
+            uploadedAt: { type: Date, default: Date.now }
+        }],
+        kycRejectionReason: { type: String },
         preferences: {
             cleanliness: { type: String, default: "" },
             noiseLevel: { type: String, default: "" },

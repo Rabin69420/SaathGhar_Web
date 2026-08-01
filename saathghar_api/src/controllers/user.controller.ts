@@ -68,7 +68,7 @@ export class UserController {
                 return ApiResponseHelper.error(res, "Unauthorized", 401);
             }
             const userId = (req.user as any)._id.toString();
-            const { firstName, lastName, email, username, preferences, phoneNumber } = req.body;
+            const { firstName, lastName, email, username, preferences, phoneNumber, fullName } = req.body;
             
             const updateData: any = {};
             if (firstName !== undefined) updateData.firstName = firstName;
@@ -76,6 +76,14 @@ export class UserController {
             if (email !== undefined) updateData.email = email;
             if (username !== undefined) updateData.username = username;
             if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+            if (fullName !== undefined) {
+                updateData.fullName = fullName;
+                const parts = fullName.trim().split(/\s+/);
+                if (parts.length > 0) {
+                    updateData.firstName = parts[0];
+                    updateData.lastName = parts.slice(1).join(" ") || "";
+                }
+            }
             
             // Keep fullName in sync if firstName or lastName is updated
             if (firstName !== undefined || lastName !== undefined) {
@@ -164,10 +172,10 @@ export class UserController {
     async getSavedRoommates(req: Request, res: Response) {
         try {
             if (!req.user) return ApiResponseHelper.error(res, "Unauthorized", 401);
-            const user = await userService.getUserById((req.user as any)._id.toString());
-            if (!user) return ApiResponseHelper.error(res, "User not found", 404);
-            await user.populate("savedRoommates", "fullName username email imageUrl preferences phoneNumber");
-            return ApiResponseHelper.success(res, user.savedRoommates || [], "Saved roommates fetched");
+            const user = req.user;
+            await (user as any).populate("savedRoommates", "fullName username email imageUrl preferences phoneNumber");
+            const userObj = typeof (user as any).toObject === "function" ? (user as any).toObject() : user;
+            return ApiResponseHelper.success(res, userObj.savedRoommates || [], "Saved roommates fetched");
         } catch (error: any) {
             return ApiResponseHelper.error(res, error.message || "Internal Server Error", error.status || 500);
         }
