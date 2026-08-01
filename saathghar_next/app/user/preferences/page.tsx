@@ -76,6 +76,7 @@ const PREFERENCE_OPTIONS = {
 type PrefKey = keyof typeof PREFERENCE_OPTIONS;
 
 const EMPTY: Record<string, string> = {
+    preferredLocation: "", maxRent: "", propertyType: "",
     cleanliness: "", noiseLevel: "", sleepSchedule: "",
     diet: "", smoking: "", pets: "", guests: "", additionalInfo: "",
 };
@@ -87,26 +88,41 @@ export default function PreferencesPage() {
     const [resetModal, setResetModal] = useState(false);
     const router = useRouter();
 
-    useEffect(() => { fetchPreferences(); }, []);
-
     const fetchPreferences = async () => {
-        setLoading(true);
         const res = await handleGetPreferences();
         if (res.success && res.data) {
-            setPreferences({ ...EMPTY, ...res.data });
+            setPreferences({ ...EMPTY, ...res.data, maxRent: res.data.maxRent ? String(res.data.maxRent) : "" });
         }
         setLoading(false);
     };
 
+    useEffect(() => {
+        const timeout = setTimeout(fetchPreferences, 0);
+        return () => clearTimeout(timeout);
+    }, []);
+
     const handleSave = async () => {
         setSaving(true);
-        const payload: Record<string, string> = {};
+        const payload: Record<string, string | number> = {};
         for (const key of Object.keys(preferences)) {
-            payload[key] = preferences[key] || "None";
+            const value = preferences[key];
+            if (value === undefined || value === null) continue;
+            const trimmed = String(value).trim();
+            if (trimmed === "") continue;
+            if (key === "maxRent") {
+                const num = Number(trimmed);
+                if (!Number.isNaN(num) && num > 0) payload[key] = num;
+                continue;
+            }
+            payload[key] = trimmed;
         }
         const res = await handleUpdatePreferences(payload);
-        if (res.success) toast.success(res.message);
-        else toast.error(res.message);
+        if (res.success) {
+            toast.success(res.message);
+            fetchPreferences();
+        } else {
+            toast.error(res.message);
+        }
         setSaving(false);
     };
 
@@ -114,7 +130,7 @@ export default function PreferencesPage() {
         const res = await handleResetPreferences();
         if (res.success) {
             toast.success(res.message);
-            setPreferences(EMPTY);
+            fetchPreferences();
         } else {
             toast.error(res.message);
         }
@@ -174,6 +190,61 @@ export default function PreferencesPage() {
 
                 {/* Preference Cards */}
                 <div className="space-y-4">
+                    {/* Room Preferences */}
+                    <div className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xs">
+                        <div className="mb-3">
+                            <h3 className="text-sm font-semibold text-foreground">Room Preferences</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">Your ideal home, budget, and location.</p>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label className="text-xs font-medium text-muted-foreground">Preferred Location</label>
+                                <input
+                                    type="text"
+                                    value={preferences.preferredLocation || ""}
+                                    onChange={(e) => setPreferences(prev => ({ ...prev, preferredLocation: e.target.value }))}
+                                    placeholder="e.g. Kathmandu, Pokhara, Bhaktapur..."
+                                    className="mt-1.5 w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-medium text-muted-foreground">Maximum Rent (Rs./month)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={preferences.maxRent || ""}
+                                    onChange={(e) => setPreferences(prev => ({ ...prev, maxRent: e.target.value }))}
+                                    placeholder="e.g. 15000"
+                                    className="mt-1.5 w-full bg-input-background text-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-xs"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-4">
+                            <label className="text-xs font-medium text-muted-foreground">Preferred Property Type</label>
+                            <div className="flex flex-wrap gap-2 mt-1.5">
+                                {["Room", "Shared Room", "Apartment", "Studio", "House", "Hostel"].map(opt => {
+                                    const isSelected = preferences.propertyType === opt;
+                                    return (
+                                        <button
+                                            key={opt}
+                                            type="button"
+                                            onClick={() => selectPref("propertyType", opt)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
+                                                isSelected
+                                                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                                    : "bg-input-background text-foreground border-border hover:border-primary/40 hover:bg-accent"
+                                            }`}
+                                        >
+                                            {opt}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
                     {(Object.keys(PREFERENCE_OPTIONS) as PrefKey[]).map(key => {
                         const pref = PREFERENCE_OPTIONS[key];
                         const selected = preferences[key];

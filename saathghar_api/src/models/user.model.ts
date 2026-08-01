@@ -33,6 +33,9 @@ const UserMongoSchema = new Schema<IUser>(
         }],
         kycRejectionReason: { type: String },
         preferences: {
+            preferredLocation: { type: String, default: "" },
+            maxRent: { type: Number },
+            propertyType: { type: String, default: "" },
             cleanliness: { type: String, default: "" },
             noiseLevel: { type: String, default: "" },
             sleepSchedule: { type: String, default: "" },

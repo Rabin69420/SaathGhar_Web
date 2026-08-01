@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const PreferencesDTO = z.object({
+    preferredLocation: z.string().max(200).optional(),
+    maxRent: z.preprocess((val) => (val === null || val === "" || val === undefined ? undefined : Number(val)), z.number().positive().max(10000000).optional()),
+    propertyType: z.enum(["Room", "Shared Room", "Apartment", "Studio", "House", "Hostel"]).optional(),
     cleanliness: z.enum(["High", "Medium", "Low"]).optional(),
     noiseLevel: z.enum(["Quiet", "Moderate", "Loud"]).optional(),
     sleepSchedule: z.enum(["Early Bird", "Night Owl", "Flexible"]).optional(),

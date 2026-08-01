@@ -153,6 +153,9 @@ export class UserController {
             }
             const userId = (req.user as any)._id.toString();
             const defaultPrefs = {
+                preferredLocation: "",
+                maxRent: undefined,
+                propertyType: "",
                 cleanliness: "Medium",
                 noiseLevel: "Moderate",
                 sleepSchedule: "Flexible",

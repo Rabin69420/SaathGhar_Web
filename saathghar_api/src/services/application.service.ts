@@ -59,6 +59,10 @@ export class ApplicationService {
         return applicationRepository.findByApplicant(applicantId);
     }
 
+    async getReceivedApplications(ownerId: string): Promise<IApplication[]> {
+        return applicationRepository.findByOwner(ownerId);
+    }
+
     async getApplicationsForListing(listingId: string, requesterId: string, isAdmin: boolean): Promise<IApplication[]> {
         const listing = await itemRepository.getItemById(listingId);
         if (!listing) {

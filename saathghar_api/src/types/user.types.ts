@@ -20,6 +20,9 @@ export const UserSchema = z.object({
     kycDocuments: z.array(KycDocumentSchema).optional(),
     kycRejectionReason: z.string().optional(),
     preferences: z.object({
+        preferredLocation: z.string().optional(),
+        maxRent: z.number().optional(),
+        propertyType: z.string().optional(),
         cleanliness: z.string().optional(),
         noiseLevel: z.string().optional(),
         sleepSchedule: z.string().optional(),
