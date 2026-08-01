@@ -12,6 +12,7 @@ import adminRoutes from "./routes/admin.route";
 import applicationRoutes from "./routes/application.route";
 import reviewRoutes from "./routes/review.route";
 import notificationRoutes from "./routes/notification.route";
+import kycRoutes from "./routes/kyc.route";
 
 const app: Application = express();
 const corsOptions = {
@@ -32,6 +33,7 @@ app.use("/api/v1/admin", adminRoutes); // admin related routes
 app.use("/api/v1/applications", applicationRoutes); // application related routes
 app.use("/api/v1/reviews", reviewRoutes); // review related routes
 app.use("/api/v1/notifications", notificationRoutes); // notification related routes
+app.use("/api/v1/kyc", kycRoutes); // KYC verification routes
 
 
 // global api handler (at the last)
