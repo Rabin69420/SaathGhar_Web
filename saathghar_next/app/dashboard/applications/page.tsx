@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { handleGetMyApplications, handleGetApplicationsForListing, handleUpdateApplicationStatus, handleDeleteApplication } from "@/lib/actions/applications-action";
+import { handleGetMyListings } from "@/lib/actions/listings-action";
 import { getUserData } from "@/lib/cookies-client";
 import ConfirmModal from "@/app/component/common/ConfirmModal";
 import Link from "next/link";
@@ -28,7 +29,7 @@ interface Application {
         imageUrl?: string;
     };
     message: string;
-    status: "pending" | "accepted" | "rejected";
+    status: "pending" | "approved" | "accepted" | "rejected";
     createdAt: string;
 }
 
@@ -82,39 +83,42 @@ export default function ApplicationsPage() {
     };
 
     const statusBadge = (status: string) => {
-        const colors = {
+        const colors: Record<string, string> = {
             pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+            approved: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
             accepted: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
             rejected: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
         };
+        const labels: Record<string, string> = {
+            pending: "Pending Admin Review",
+            approved: "Approved",
+            accepted: "Accepted",
+            rejected: "Rejected",
+        };
         return (
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${colors[status as keyof typeof colors]}`}>
-                {status}
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[status] || ""}`}>
+                {labels[status] || status}
             </span>
         );
     };
 
     const handleTabChange = async (tab: "sent" | "received") => {
         setActiveTab(tab);
-        if (tab === "received" && receivedApplications.length === 0) {
+        if (tab === "received") {
             setLoading(true);
             try {
-                const res = await handleGetMyApplications();
-                if (res.success && res.data) {
-                    const myListingIds = res.data
-                        .filter((app: Application) => app.listing?.owner?._id === user?._id)
-                        .map((app: Application) => app.listing?._id);
-
-                    const uniqueListingIds = [...new Set(myListingIds)] as string[];
+                const listingsRes = await handleGetMyListings();
+                if (listingsRes.success && listingsRes.data && listingsRes.data.length > 0) {
                     const allReceived: Application[] = [];
-
-                    for (const listingId of uniqueListingIds) {
-                        const listingRes = await handleGetApplicationsForListing(listingId);
-                        if (listingRes.success && listingRes.data) {
-                            allReceived.push(...listingRes.data);
+                    for (const listing of listingsRes.data) {
+                        const appRes = await handleGetApplicationsForListing(listing._id);
+                        if (appRes.success && appRes.data) {
+                            allReceived.push(...appRes.data);
                         }
                     }
-                    setReceivedApplications(allReceived);
+                    setReceivedApplications(allReceived.filter(app => app.status !== "pending"));
+                } else {
+                    setReceivedApplications([]);
                 }
             } catch {
                 toast.error("Failed to load received applications");
@@ -212,7 +216,7 @@ export default function ApplicationsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                             </svg>
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No applications received</h3>
-                            <p className="text-gray-500 dark:text-gray-400">When someone applies to your listings, they&apos;ll appear here.</p>
+                            <p className="text-gray-500 dark:text-gray-400">Applications approved by admin for your listings will appear here.</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -234,7 +238,7 @@ export default function ApplicationsPage() {
                                                 {app.applicant?.email} &middot; {new Date(app.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
-                                        {app.status === "pending" && (
+                                        {app.status === "approved" && (
                                             <div className="flex gap-2 ml-4">
                                                 <button
                                                     onClick={() => handleStatusUpdate(app._id, "accepted")}
