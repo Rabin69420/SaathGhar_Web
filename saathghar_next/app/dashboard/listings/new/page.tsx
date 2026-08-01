@@ -1,14 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { handleCreateListing, handleUploadMedia } from "@/lib/actions/listings-action";
+import { handleGetKycStatus } from "@/lib/actions/kyc-action";
 import { toast } from "react-toastify";
+import Link from "next/link";
 
 export default function NewListingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [kycVerified, setKycVerified] = useState<boolean | null>(null);
 
   const [title, setTitle] = useState("");
   const [rent, setRent] = useState("");
@@ -17,6 +20,18 @@ export default function NewListingPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    const checkKyc = async () => {
+      const res = await handleGetKycStatus();
+      if (res.success && res.data) {
+        setKycVerified(res.data.kycStatus === "verified");
+      } else {
+        setKycVerified(false);
+      }
+    };
+    checkKyc();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +123,28 @@ export default function NewListingPage() {
           </div>
         </div>
 
+        {kycVerified === null ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+          </div>
+        ) : kycVerified === false ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+            <svg className="w-12 h-12 mx-auto text-amber-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <h2 className="text-lg font-bold text-amber-700 mb-1">KYC Verification Required</h2>
+            <p className="text-sm text-amber-600 mb-4">
+              You need to verify your identity before posting a listing.
+            </p>
+            <Link
+              href="/dashboard/kyc"
+              className="inline-block px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg shadow-sm hover:shadow transition-all text-sm"
+            >
+              Complete KYC Verification
+            </Link>
+          </div>
+        ) : (
+          <>
         {errorMsg && (
           <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg font-semibold mb-6">
             {errorMsg}
@@ -213,6 +250,8 @@ export default function NewListingPage() {
             )}
           </button>
         </form>
+          </>
+        )}
       </div>
     </div>
   );
