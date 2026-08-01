@@ -1,6 +1,6 @@
 "use server";
 
-import { getAdminStats, getAdminUsers, deleteAdminUser, getAdminListings, deleteAdminListing, getAdminApplications, deleteAdminApplication, getAdminReviews, deleteAdminReview } from "../api/admin";
+import { getAdminStats, getAdminUsers, deleteAdminUser, getAdminListings, deleteAdminListing, getAdminApplications, deleteAdminApplication, updateAdminApplicationStatus, getAdminReviews, deleteAdminReview } from "../api/admin";
 import { revalidatePath } from "next/cache";
 
 export const handleGetAdminStats = async () => {
@@ -31,7 +31,7 @@ export const handleDeleteAdminUser = async (id: string) => {
     try {
         const response = await deleteAdminUser(id);
         if (response.success) {
-            revalidatePath("/admin/dashboard");
+            revalidatePath("/admin/users");
             return { success: true, message: "User deleted successfully" };
         }
         return { success: false, message: response.message || "Failed to delete user" };
@@ -57,7 +57,7 @@ export const handleDeleteAdminListing = async (id: string) => {
         const response = await deleteAdminListing(id);
         if (response.success) {
             revalidatePath("/dashboard");
-            revalidatePath("/admin/dashboard");
+            revalidatePath("/admin/listings");
             return { success: true, message: "Listing deleted successfully" };
         }
         return { success: false, message: response.message || "Failed to delete listing" };
@@ -82,12 +82,26 @@ export const handleDeleteAdminApplication = async (id: string) => {
     try {
         const response = await deleteAdminApplication(id);
         if (response.success) {
-            revalidatePath("/admin/dashboard");
+            revalidatePath("/admin/applications");
             return { success: true, message: "Application deleted successfully" };
         }
         return { success: false, message: response.message || "Failed to delete application" };
     } catch (error: any) {
         return { success: false, message: error.message || "Delete application action failed" };
+    }
+};
+
+export const handleUpdateAdminApplicationStatus = async (id: string, status: "approved" | "rejected") => {
+    try {
+        const response = await updateAdminApplicationStatus(id, status);
+        if (response.success) {
+            revalidatePath("/admin/applications");
+            revalidatePath("/dashboard/applications");
+            return { success: true, message: `Application ${status} successfully` };
+        }
+        return { success: false, message: response.message || "Failed to update application" };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Update application action failed" };
     }
 };
 
@@ -107,7 +121,7 @@ export const handleDeleteAdminReview = async (id: string) => {
     try {
         const response = await deleteAdminReview(id);
         if (response.success) {
-            revalidatePath("/admin/dashboard");
+            revalidatePath("/admin/reviews");
             return { success: true, message: "Review deleted successfully" };
         }
         return { success: false, message: response.message || "Failed to delete review" };
