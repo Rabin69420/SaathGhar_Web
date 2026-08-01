@@ -14,7 +14,7 @@ const ApplicationMongoSchema = new Schema<IApplication>(
         listing: { type: Schema.Types.ObjectId, ref: "Item", required: true },
         applicant: { type: Schema.Types.ObjectId, ref: "User", required: true },
         message: { type: String, required: true },
-        status: { type: String, enum: ["pending", "accepted", "rejected"], default: "pending" },
+        status: { type: String, enum: ["pending", "approved", "accepted", "rejected"], default: "pending" },
     },
     { timestamps: true }
 );

@@ -7,6 +7,6 @@ export const CreateApplicationDTO = z.object({
 export type CreateApplicationDTO = z.infer<typeof CreateApplicationDTO>;
 
 export const UpdateApplicationStatusDTO = z.object({
-    status: z.enum(["accepted", "rejected"]),
+    status: z.enum(["approved", "accepted", "rejected"]),
 });
 export type UpdateApplicationStatusDTO = z.infer<typeof UpdateApplicationStatusDTO>;
