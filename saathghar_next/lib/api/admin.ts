@@ -64,6 +64,15 @@ export const deleteAdminApplication = async (id: string) => {
     }
 };
 
+export const updateAdminApplicationStatus = async (id: string, status: "approved" | "rejected") => {
+    try {
+        const response = await axiosInstance.put(API.APPLICATIONS.UPDATE_STATUS(id), { status });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || error.message || "Failed to update application status");
+    }
+};
+
 export const getAdminReviews = async () => {
     try {
         const response = await axiosInstance.get(API.ADMIN.REVIEWS);

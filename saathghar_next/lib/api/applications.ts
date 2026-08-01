@@ -37,7 +37,7 @@ export const getApplicationById = async (id: string) => {
     }
 };
 
-export const updateApplicationStatus = async (id: string, status: "accepted" | "rejected") => {
+export const updateApplicationStatus = async (id: string, status: "approved" | "accepted" | "rejected") => {
     try {
         const response = await axiosInstance.put(API.APPLICATIONS.UPDATE_STATUS(id), { status });
         return response.data;
