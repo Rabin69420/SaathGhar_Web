@@ -31,7 +31,7 @@ export class NotificationController {
         try {
             if (!req.user) return ApiResponseHelper.error(res, "Unauthorized", 401);
             const userId = (req.user as any)._id.toString();
-            const notification = await notificationService.markAsRead(req.params.id, userId);
+            const notification = await notificationService.markAsRead(req.params.id as string, userId);
             return ApiResponseHelper.success(res, notification, "Notification marked as read");
         } catch (error: any) {
             return ApiResponseHelper.error(res, error.message || "Internal Server Error", error.status || 500);
@@ -53,7 +53,7 @@ export class NotificationController {
         try {
             if (!req.user) return ApiResponseHelper.error(res, "Unauthorized", 401);
             const userId = (req.user as any)._id.toString();
-            await notificationService.deleteNotification(req.params.id, userId);
+            await notificationService.deleteNotification(req.params.id as string, userId);
             return ApiResponseHelper.success(res, null, "Notification deleted");
         } catch (error: any) {
             return ApiResponseHelper.error(res, error.message || "Internal Server Error", error.status || 500);
